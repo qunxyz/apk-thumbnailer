@@ -1,0 +1,4 @@
+[Thumbnailer Entry]
+TryExec=apk-thumbnailer
+Exec=apk-thumbnailer %i %o %s %u
+MimeType=application/vnd.android.package-archive;
