@@ -1,29 +1,35 @@
 #!/usr/bin/env python2
-import os
-import sys
+import os,sys,re,string
 import zipfile
-import subprocess
-import re
+
+printable = set(string.printable)
+
+def process(stream):
+    found_str = ""
+    while True:
+        data = stream.read(1024*4)
+        if not data:
+            break
+        for char in data:
+            if char in printable:
+                found_str += char
+            elif len(found_str) >= 4:
+                yield found_str
+                found_str = ""
+            else:
+                found_str = ""
 
 def make_thumb(src, out, size):
     global logger
     apk = zipfile.ZipFile(src)
-    
-    # cleaning source for bash command
-    src = src.replace(' ', '\ ')
-    src = src.replace('(', '\(')
-    src = src.replace(')', '\)')
-    
-    command = "aapt dump badging " + src
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
-    bad = process.communicate()[0]
-    #bad = "application: label='Chrome' icon='res/mipmap-mdpi/app_icon.png' \n launchable-activity: name='com.google.android.apps.chrome.Main'"
-    
-    match = re.search(r"(icon=)'(\w|/|-|\.|\d)+'", bad)
-    iconAddresInApk=  re.search(r"[^(icon=')]((?:[^'\\]|\\')*)", match.group()).group()
+    with open(src) as fd:
+        for found_str in process(fd):
+            result=re.match(r'(res\/.*ic_launcher.png)', found_str)
+            if result:
+                break
     
     fd = open(out, "w")
-    fd.write(apk.read(iconAddresInApk))
+    fd.write(apk.read(found_str))
     fd.close()
     
     pass
