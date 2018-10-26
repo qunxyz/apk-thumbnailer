@@ -4,24 +4,6 @@ import sys
 import zipfile
 import subprocess
 import re
-import logging
-#from gi.repository import Gio
-
-def setup_custom_logger(name):
-    formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
-    
-    #logFileName = os.path.join(LOGDIR_DEFAULT, name + '.log')
-    fh = logging.FileHandler(os.path.expanduser("~") + '/apk-thumbnailer.log', mode='a', encoding=None, delay=0)
-    
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
-    return logger
-
-logger = setup_custom_logger('apk_thumbnailer')
 
 def make_thumb(src, out, size):
     global logger
@@ -33,14 +15,12 @@ def make_thumb(src, out, size):
     src = src.replace(')', '\)')
     
     command = "aapt dump badging " + src
-    logger.info('command: ' + command)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None, shell=True)
     bad = process.communicate()[0]
     #bad = "application: label='Chrome' icon='res/mipmap-mdpi/app_icon.png' \n launchable-activity: name='com.google.android.apps.chrome.Main'"
     
     match = re.search(r"(icon=)'(\w|/|-|\.|\d)+'", bad)
     iconAddresInApk=  re.search(r"[^(icon=')]((?:[^'\\]|\\')*)", match.group()).group()
-    logger.info('iconAddrs: ' + iconAddresInApk)
     
     fd = open(out, "w")
     fd.write(apk.read(iconAddresInApk))
@@ -68,7 +48,6 @@ def main(argv):
         
         i += 1
     
-    logger.info('src: ' + source + ' out: ' + output + ' size: ' + size)
     make_thumb(source, output, size)
     pass
 
